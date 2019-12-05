@@ -23,8 +23,11 @@ class Student(User):
 
     def enlist(self, course):
         if course.currsize < course.size:
-            self.cart.add(course)
-            course.add_student(self)
+            if course.get_diff(self.credited_courses):
+                self.cart.add(course)
+                course.add_student(self)
+            else:
+                print("You must take the prerequisites first")
         else:
             print("Course is already full")
 
@@ -43,7 +46,6 @@ class Admin(User):
         self.password = password
     def __str__(self):
         return self.first+'\t'+self.last+'\t\t'+str(self.id)+'\tAdmin'
-
 
     def add_course(self, name, code, units, size):
         temp = Course(name, code, units, size)
@@ -81,6 +83,12 @@ class Course:
     # Adds a prerequisite
     def remove_prereq(self, code):
         self.prereqs.remove(code)
+    def get_diff(self, credited_courses):
+        diff = self.prereqs.difference(credited_courses)
+        if len(diff) > 0:
+            return False
+        else:
+            return True
 # Prints out all courses available
 def view_courses():
     print(">>>>\tCourse Directory\t<<<<")
@@ -96,6 +104,12 @@ def get_course(code):
     for c in courses:
         if c.code == code:
             return c
+
+# Retrieve a user from the users set
+def get_user(id):
+    for p in users:
+        if p.id == id:
+            return p
 # Allows student to view all courses and add it
 def add_menu(user):
     view_courses()
@@ -155,6 +169,11 @@ def remove_course_prereq(admin):
             course.remove_prereq(prereq_code)
     else:
         print("Nothing to remove")
+# Allows student to add course code to be credited (for prereq)
+def credit_course(student):
+    view_courses()
+    code = input("Please enter course code to credit\t: ")
+    student.credit(code)
 # Registration page
 def createAcct(id, type):
     fname = input("Enter first name\t: ")
@@ -169,11 +188,6 @@ def createAcct(id, type):
         temp = Admin(fname,lname,id,password)
         users.add(temp)
 
-# Retrieve a user from the users set
-def get_user(id):
-    for p in users:
-        if p.id == id:
-            return p
 # Show all users registered
 def view_users():
     print(">>>>\tUser Directory\t<<<<")
@@ -189,9 +203,10 @@ def student_menu(id):
     while True:
         try:
             print(">>>>\tStudent Dashboard\t<<<<")
-            choice = int(input("[1] Add a course\n[2] Drop a course\n[3] View cart\n[4] Logout\n"))
+            choice = int(input("[1] Add a course\n[2] Drop a course\n[3] View cart\n" +
+            "[4] Credit a course\n[5] Logout\n"))
 
-            if choice >= 1 and choice <= 4:
+            if choice >= 1 and choice <= 5:
                 break;
             else:
                 print("Not an option")
@@ -206,6 +221,9 @@ def student_menu(id):
         student_menu(id)
     elif choice == 3:
         view_cart(student)
+        student_menu(id)
+    elif choice == 4:
+        credit_course(student)
         student_menu(id)
     else:
         MainMenu()
