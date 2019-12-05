@@ -1,4 +1,7 @@
-# Kirsten Sison
+# Title: AnimoSys Enlistment Platform
+# Language: Python
+# Created by Kirsten Sison
+# Finished in Dec 5, 2019 as Term 1 Project for DLSU COMET
 import sys
 
 users = set() # set of users registered
@@ -83,6 +86,7 @@ class Course:
     # Adds a prerequisite
     def remove_prereq(self, code):
         self.prereqs.remove(code)
+    # Checks if student has the prerequisites required (done by set difference)
     def get_diff(self, credited_courses):
         diff = self.prereqs.difference(credited_courses)
         if len(diff) > 0:
@@ -134,6 +138,7 @@ def view_cart(student):
     if (len(courses) == 0):
         print("\t\tEMPTY\t\t")
     else:
+        print("Code\tCourse Name\tUnits\tCapacity\tPrerequisites")
         for c in student.cart:
             print(c)
             sum += c.units
@@ -181,12 +186,10 @@ def createAcct(id, type):
     if type == 1:
         college = input("Enter college\t: ")
         course = input("Enter course\t: ")
-        temp = Student(fname,lname,id,college,course)
-        users.add(temp)
+        users.add(Student(fname,lname,id,college,course))
     else:
         password = input("Enter a pass key\t: ")
-        temp = Admin(fname,lname,id,password)
-        users.add(temp)
+        users.add(Admin(fname,lname,id,password))
 
 # Show all users registered
 def view_users():
