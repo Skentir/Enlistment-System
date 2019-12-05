@@ -17,16 +17,24 @@ class Student(User):
         self.college = college
         self.course = course
 
-    def fullname(self):
-        return '{} {}'.format(self.first, self.last)
+    def __str__(self):
+        return "{} {}\t{}\tStudent\t{} {} {}".format(self.first, self.last, self.id, self.college,self.course)
 
     def enlist(self, course):
-        cart.add(course)
+        self.cart.add(course)
 
+    def drop(self, code):
+        for c in self.cart:
+            if c.code == code:
+                self.cart.remove(c)
+                break
 class Admin(User):
     def __init__(self, first, last, id, password):
         super().__init__(first, last, id)
         self.password = password
+    def __str__(self):
+        return "{} {}\t{}}\tAdmin".format(self.first, self.last, self.id)
+
 
     def add_course(self, name, code, units):
         temp = Course(name, code, units)
@@ -36,22 +44,25 @@ class Admin(User):
         for c in courses:
             if c.code == code:
                 courses.remove(c)
-
+                break
 
 class Course:
     def __init__(self, name, code, units):
         self.name = name
         self.code = code
         self.units = units
-    def info(self):
-        return '{} {} {}'.format(self.code,"\t\t", self.name,"\t\t", self.units)
+    def __str__(self):
+        return "{}\t{}\t\t{}".format(self.code, self.name, self.units)
 
 # Prints out all courses available
 def view_courses():
     print(">>>>\tCourse Directory\t<<<<")
-    print("Code\t\tCourse Name\t\tUnits")
-    for c in courses:
-        Course.info(c)
+    print("Code\tCourse Name\tUnits")
+    if (len(courses) == 0):
+        print("\t\tEMPTY\t\t")
+    else:
+        for c in courses:
+            print (c)
 
 #Returns a course given the code
 def get_course(code):
@@ -65,26 +76,40 @@ def add_menu(user):
     if isinstance(user, Admin):
         name = input("Enter course name\t: ")
         code = input("Enter course code\t: ")
-        units = input("Enter course units\t: ")
+        units = int(input("Enter course units\t: "))
         user.add_course(name,code,units)
     # Student users add to cart
     else:
-        view_cart()
+        view_cart(user)
         code = input("Please type the course code to add\t: ")
         course = get_course(code)
         user.enlist(course)
 
 def view_cart(student):
     print(">>>>\tShopping Cart\t<<<<")
-    sum
-    for c in student.courses:
-        Course.info(c)
-        sum += c.units
-    print("Total Units\t: ", sum)
+    sum = 0
+    if (len(courses) == 0):
+        print("\t\tEMPTY\t\t")
+    else:
+        for c in student.cart:
+            print(c)
+            sum += c.units
+        print("Total Units\t: ", sum)
 # Allows student to view enlisted courses and remove them
 # TODO: Delete course from Student's course set
-def drop_menu(student):
-    view_cart(student)
+# Allows student to view all courses and add it
+def drop_menu(user):
+    # Admin users add to course offerings
+    if isinstance(user, Admin):
+        view_courses()
+        code = input("Please enter course code to be removed\t: ")
+        user.remove_course(code)
+    # Student users add to cart
+    else:
+        view_cart(user)
+        code = input("Please enter course code to be removed\t: ")
+        user.drop(code)
+
 # Checks if the user is already registered
 def findUser(id):
     for p in users:
@@ -111,12 +136,9 @@ def get_user(id):
             return p
 def view_users():
     print(">>>>\tUser Directory\t<<<<")
-    print("First\t\tLast\t\tID\t\tRole")
+    print("First\tLast\t\tID\t\tRole\t\tCollege\t\tCourse")
     for p in users:
-        if isinstance(p, Admin):
-            print(p.first,"\t\t", p.last,"\t\t", p.id,"\t\tAdmin")
-        else:
-            print(p.first,"\t\t", p.last,"\t\t", p.id,"\t\tStudent\n")
+        print(p)
 # Allows navigation to add, drop, and view menu
 def student_menu(id):
     student = get_user(id)
@@ -134,10 +156,13 @@ def student_menu(id):
 
     if choice == 1:
         add_menu(student)
+        student_menu(id)
     elif choice == 2:
         drop_menu(student)
+        student_menu(id)
     elif choice == 3:
         view_cart(student)
+        student_menu(id)
     else:
         MainMenu()
 
@@ -167,7 +192,9 @@ def admin_menu(id):
         admin_menu(id)
     elif choice == 4:
         view_users()
+        print("wala")
         admin_menu(id)
+        print("ulit")
     else:
         MainMenu()
 
@@ -206,7 +233,7 @@ def MainMenu():
             id = int(input("Enter ID number\t: "))
             exists = findUser(id)
             # Check if Student exists
-            if exists:
+            if exists and isinstance(get_user(id), Student):
                 student_menu(id)
             else:
                 print("Oops! You're not registered yet.\nLet's create an account!")
@@ -219,7 +246,7 @@ def MainMenu():
             id = int(input("Enter employee ID\t: "))
             exists = findUser(id)
             # Check if Admin exists
-            if exists:
+            if exists and isinstance(get_user(id), Admin):
                 admin_menu(id)
             else:
                 print("Oops! You're not registered yet.\nLet's create an account!\n")
