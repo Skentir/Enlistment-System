@@ -18,26 +18,31 @@ class Student(User):
         self.course = course
 
     def __str__(self):
-        return "{} {}\t{}\tStudent\t{} {} {}".format(self.first, self.last, self.id, self.college,self.course)
+        return self.first+'\t'+self.last+'\t\t'+str(self.id)+'\tStudent\t'+self.college+'\t'+self.course
 
     def enlist(self, course):
-        self.cart.add(course)
+        if course.currsize < course.size:
+            self.cart.add(course)
+            course.add_student(self)
+        else:
+            print("Course is already full")
 
     def drop(self, code):
         for c in self.cart:
             if c.code == code:
                 self.cart.remove(c)
+                c.remove_student(self)
                 break
 class Admin(User):
     def __init__(self, first, last, id, password):
         super().__init__(first, last, id)
         self.password = password
     def __str__(self):
-        return "{} {}\t{}}\tAdmin".format(self.first, self.last, self.id)
+        return self.first+'\t'+self.last+'\t\t'+str(self.id)+'\tAdmin'
 
 
-    def add_course(self, name, code, units):
-        temp = Course(name, code, units)
+    def add_course(self, name, code, units, size):
+        temp = Course(name, code, units, size)
         courses.add(temp)
 
     def remove_course(self, code):
@@ -47,17 +52,29 @@ class Admin(User):
                 break
 
 class Course:
-    def __init__(self, name, code, units):
+    def __init__(self, name, code, units, size):
         self.name = name
         self.code = code
         self.units = units
+        self.size = size
+        self.currsize = 0
+        self.classlist = set()
+
     def __str__(self):
-        return "{}\t{}\t\t{}".format(self.code, self.name, self.units)
+        return "{}\t{}\t\t{}\t{}/{}".format(self.code,self.name,self.units,self.currsize,self.size)
+    # Adds student to the class
+    def add_student(self, student):
+        self.classlist.add(student)
+        self.currsize += 1
+    # Removes student to the class
+    def remove_student(self, student):
+        self.classlist.remove(student)
+        self.currsize -= 1
 
 # Prints out all courses available
 def view_courses():
     print(">>>>\tCourse Directory\t<<<<")
-    print("Code\tCourse Name\tUnits")
+    print("Code\tCourse Name\tUnits\tCapacity")
     if (len(courses) == 0):
         print("\t\tEMPTY\t\t")
     else:
@@ -77,7 +94,8 @@ def add_menu(user):
         name = input("Enter course name\t: ")
         code = input("Enter course code\t: ")
         units = int(input("Enter course units\t: "))
-        user.add_course(name,code,units)
+        size = int(input("Enter course capacity\t: "))
+        user.add_course(name,code,units,size)
     # Student users add to cart
     else:
         view_cart(user)
@@ -110,13 +128,6 @@ def drop_menu(user):
         code = input("Please enter course code to be removed\t: ")
         user.drop(code)
 
-# Checks if the user is already registered
-def findUser(id):
-    for p in users:
-        if (p.id == id):
-            return True
-    return False
-
 def createAcct(id, type):
     fname = input("Enter first name\t: ")
     lname = input("Enter last name\t: ")
@@ -129,16 +140,21 @@ def createAcct(id, type):
         password = input("Enter a pass key\t: ")
         temp = Admin(fname,lname,id,password)
         users.add(temp)
+
 # Retrieve a user from the users set
 def get_user(id):
     for p in users:
         if p.id == id:
             return p
+# Show all users registered
 def view_users():
     print(">>>>\tUser Directory\t<<<<")
-    print("First\tLast\t\tID\t\tRole\t\tCollege\t\tCourse")
-    for p in users:
-        print(p)
+    print("First\tLast\t\tID\tRole\tCollege\tCourse")
+    if len(users) == 0:
+        print("\t\tEMPTY\t\t")
+    else:
+        for p in users:
+            print(p.__str__())
 # Allows navigation to add, drop, and view menu
 def student_menu(id):
     student = get_user(id)
@@ -180,7 +196,6 @@ def admin_menu(id):
         except ValueError:
                 print("This is not a valid number.")
 
-
     if choice == 1:
         add_menu(admin)
         admin_menu(id)
@@ -197,7 +212,12 @@ def admin_menu(id):
         print("ulit")
     else:
         MainMenu()
-
+# Checks if admin password is correct
+def checkPassword(admin, password):
+    if admin.password == password:
+        return True
+    else:
+        return False
 
 def MainMenu():
     print("\n>>>>\tWelcome to AnimoSys!\t<<<<\n")
@@ -231,10 +251,12 @@ def MainMenu():
     if userType == 1:
         try:
             id = int(input("Enter ID number\t: "))
-            exists = findUser(id)
-            # Check if Student exists
-            if exists and isinstance(get_user(id), Student):
+            # Only allow student users to access student Dashboard
+            if isinstance(get_user(id), Student):
                 student_menu(id)
+            elif isinstance(get_user(id), Admin):
+                print("Sorry! You are not a student user. Please log in again.")
+                MainMenu()
             else:
                 print("Oops! You're not registered yet.\nLet's create an account!")
                 createAcct(id, userType)
@@ -244,10 +266,17 @@ def MainMenu():
     else:
         try:
             id = int(input("Enter employee ID\t: "))
-            exists = findUser(id)
-            # Check if Admin exists
-            if exists and isinstance(get_user(id), Admin):
-                admin_menu(id)
+            # Only allow admin users to access Admin Settings
+            if isinstance(get_user(id), Admin): #
+                password = input("Enter passkey\t: ")
+                if checkPassword(get_user(id),password):
+                    admin_menu(id)
+                else:
+                    print("Wrong passkey.")
+                    MainMenu()
+            elif isinstance(get_user(id), Student):
+                print("Sorry! You are not an admin user. Please log in again.")
+                MainMenu()
             else:
                 print("Oops! You're not registered yet.\nLet's create an account!\n")
                 createAcct(id, userType)
