@@ -16,6 +16,7 @@ class Student(User):
         self.cart = set()
         self.college = college
         self.course = course
+        self.credited_courses = set()
 
     def __str__(self):
         return self.first+'\t'+self.last+'\t\t'+str(self.id)+'\tStudent\t'+self.college+'\t'+self.course
@@ -33,6 +34,9 @@ class Student(User):
                 self.cart.remove(c)
                 c.remove_student(self)
                 break
+    def credit(self, code):
+        self.credited_courses.add(code)
+
 class Admin(User):
     def __init__(self, first, last, id, password):
         super().__init__(first, last, id)
@@ -59,9 +63,10 @@ class Course:
         self.size = size
         self.currsize = 0
         self.classlist = set()
+        self.prereqs = set()
 
     def __str__(self):
-        return "{}\t{}\t\t{}\t{}/{}".format(self.code,self.name,self.units,self.currsize,self.size)
+        return "{}\t{}\t\t{}\t{}/{}\t\t{}".format(self.code,self.name,self.units,self.currsize,self.size,','.join(self.prereqs))
     # Adds student to the class
     def add_student(self, student):
         self.classlist.add(student)
@@ -70,11 +75,16 @@ class Course:
     def remove_student(self, student):
         self.classlist.remove(student)
         self.currsize -= 1
-
+    # Adds a prerequisite
+    def add_prereq(self, code):
+        self.prereqs.add(code)
+    # Adds a prerequisite
+    def remove_prereq(self, code):
+        self.prereqs.remove(code)
 # Prints out all courses available
 def view_courses():
     print(">>>>\tCourse Directory\t<<<<")
-    print("Code\tCourse Name\tUnits\tCapacity")
+    print("Code\tCourse Name\tUnits\tCapacity\tPrerequisites")
     if (len(courses) == 0):
         print("\t\tEMPTY\t\t")
     else:
@@ -103,6 +113,7 @@ def add_menu(user):
         course = get_course(code)
         user.enlist(course)
 
+# Allows student to view all courses in cart
 def view_cart(student):
     print(">>>>\tShopping Cart\t<<<<")
     sum = 0
@@ -114,8 +125,6 @@ def view_cart(student):
             sum += c.units
         print("Total Units\t: ", sum)
 # Allows student to view enlisted courses and remove them
-# TODO: Delete course from Student's course set
-# Allows student to view all courses and add it
 def drop_menu(user):
     # Admin users add to course offerings
     if isinstance(user, Admin):
@@ -127,7 +136,26 @@ def drop_menu(user):
         view_cart(user)
         code = input("Please enter course code to be removed\t: ")
         user.drop(code)
-
+# Adds a prereq code of a coures
+def add_course_prereq(admin):
+    view_courses()
+    code = input("Please enter course code to add a prereq\t: ")
+    course = get_course(code)
+    prereq_code = input("Please enter the prereq course code\t: ")
+    if prereq_code != code:
+        course.add_prereq(prereq_code)
+# Removes prereq code of a course
+def remove_course_prereq(admin):
+    view_courses()
+    code = input("Please enter course code to add a prereq\t: ")
+    course = get_course(code)
+    if (len(course.prereqs) != 0):
+        prereq_code = input("Please enter the prereq course code\t: ")
+        if prereq_code != code:
+            course.remove_prereq(prereq_code)
+    else:
+        print("Nothing to remove")
+# Registration page
 def createAcct(id, type):
     fname = input("Enter first name\t: ")
     lname = input("Enter last name\t: ")
@@ -188,8 +216,9 @@ def admin_menu(id):
     while True:
         try:
             print(">>>>\tAdmin Settings\t<<<<")
-            choice = int(input("[1] Add a course\n[2] Remove a course\n[3] View Courses\n[4] View Users\n[5] Logout\n"))
-            if choice >= 1 and choice <= 5:
+            choice = int(input("[1] Add a course\n[2] Remove a course\n[3] View Courses\n[4] View Users\n"
+                    + "[5] Add course prerequisite\n[6] Remove course prerequisite\n[7] Logout\n"))
+            if choice >= 1 and choice <= 7:
                 break;
             else:
                 print("Not an option")
@@ -207,9 +236,13 @@ def admin_menu(id):
         admin_menu(id)
     elif choice == 4:
         view_users()
-        print("wala")
         admin_menu(id)
-        print("ulit")
+    elif choice == 5:
+        add_course_prereq(admin)
+        admin_menu(id)
+    elif choice == 6:
+        remove_course_prereq(admin)
+        admin_menu(id)
     else:
         MainMenu()
 # Checks if admin password is correct
