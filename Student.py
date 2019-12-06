@@ -6,6 +6,13 @@ import sys
 
 users = set() # set of users registered
 courses = set() # set of courses available
+# I used set as the data structure for courses and students because of the ff.
+# 1. Sets doesn't allow duplicates, saving me from more lines of code for validation had I used a List.
+#   Besides, every student/employee ID and course object is unique and cannot have a clone.
+# 2. Set operations prove to be useful especially when checking for requirements. In example, I used
+#   set difference to easily check whether the prerequisites exist in the credited courses of the student!
+#   This can also be utilized further had I implemented a basic Analytics tool for the Admin.
+# 3. It's faster compared to a List since Set is implemented with a Hash Table in Python!
 
 class User:
     def __init__(self, first, last, id):
@@ -16,44 +23,45 @@ class User:
 class Student(User):
     def __init__(self, first, last, id, college, course):
         super().__init__(first, last, id)
-        self.cart = set()
+        self.cart = set()   # shopping cart
         self.college = college
         self.course = course
         self.credited_courses = set()
 
     def __str__(self):
         return self.first+'\t'+self.last+'\t\t'+str(self.id)+'\tStudent\t'+self.college+'\t'+self.course
-
+    # Add course object to shopping cart
     def enlist(self, course):
         if course.currsize < course.size:
-            if course.get_diff(self.credited_courses):
+            if course.get_diff(self.credited_courses): # All prerequisites must exist in the credited courses of the student
                 self.cart.add(course)
                 course.add_student(self)
             else:
                 print("You must take the prerequisites first")
         else:
             print("Course is already full")
-
+    # Remove course object from shopping cart
     def drop(self, code):
         for c in self.cart:
-            if c.code == code:
+            if c.code == code:  # Drop vourse if it's in the student's shopping cart
                 self.cart.remove(c)
                 c.remove_student(self)
                 break
+    # Add course code to credited courses
     def credit(self, code):
-        self.credited_courses.add(code)
+        self.credited_courses.add(code) # Adds a course code to the credited course set
 
 class Admin(User):
     def __init__(self, first, last, id, password):
         super().__init__(first, last, id)
         self.password = password
+
     def __str__(self):
         return self.first+'\t'+self.last+'\t\t'+str(self.id)+'\tAdmin'
-
+    # Adds course object to set of course offerings
     def add_course(self, name, code, units, size):
-        temp = Course(name, code, units, size)
-        courses.add(temp)
-
+        courses.add(Course(name, code, units, size))
+    # Removes a course object from the set of course offerings
     def remove_course(self, code):
         for c in courses:
             if c.code == code:
@@ -205,7 +213,7 @@ def student_menu(id):
     student = get_user(id)
     while True:
         try:
-            print(">>>>\tStudent Dashboard\t<<<<")
+            print("٩꒰｡•‿•｡꒱۶\tStudent Dashboard\t٩꒰｡•‿•｡꒱۶")
             choice = int(input("[1] Add a course\n[2] Drop a course\n[3] View cart\n" +
             "[4] Credit a course\n[5] Logout\n"))
 
@@ -236,7 +244,7 @@ def admin_menu(id):
     admin = get_user(id)
     while True:
         try:
-            print(">>>>\tAdmin Settings\t<<<<")
+            print("꒰●꒡ ̫ ꒡●꒱>>\tAdmin Settings\t<<꒰●꒡ ̫ ꒡●꒱")
             choice = int(input("[1] Add a course\n[2] Remove a course\n[3] View Courses\n[4] View Users\n"
                     + "[5] Add course prerequisite\n[6] Remove course prerequisite\n[7] Logout\n"))
             if choice >= 1 and choice <= 7:
@@ -287,7 +295,7 @@ def MainMenu():
             else:
                 print("Number not a choice.")
         except ValueError:
-                print("This is not a valid number.")
+                print("This is not a valid number. (⌯⊙⍛⊙)")
 
     while True:
         try:
@@ -299,7 +307,7 @@ def MainMenu():
             else:
                 print("Number not a choice.")
         except ValueError:
-                print("This is not a valid number.")
+                print("This is not a valid number. (⌯⊙⍛⊙)")
 
     # Student module
     if userType == 1:
@@ -309,14 +317,14 @@ def MainMenu():
             if isinstance(get_user(id), Student):
                 student_menu(id)
             elif isinstance(get_user(id), Admin):
-                print("Sorry! You are not a student user. Please log in again.")
+                print("Sorry! You are not a student user. Please log in again. ٩꒰• ε •꒱۶⁼³")
                 MainMenu()
             else:
-                print("Oops! You're not registered yet.\nLet's create an account!")
+                print("Oops! You're not registered yet.\nLet's create an account!(=^-ω-^=)")
                 createAcct(id, userType)
                 MainMenu()
         except ValueError:
-            print("This is not a valid number.")
+            print("This is not a valid number. (⌯⊙⍛⊙)")
     else:
         try:
             id = int(input("Enter employee ID\t: "))
@@ -326,15 +334,15 @@ def MainMenu():
                 if checkPassword(get_user(id),password):
                     admin_menu(id)
                 else:
-                    print("Wrong passkey.")
+                    print("Wrong passkey. └༼ •́ ͜ʖ •̀ ༽┘")
                     MainMenu()
             elif isinstance(get_user(id), Student):
-                print("Sorry! You are not an admin user. Please log in again.")
+                print("Sorry! You are not an admin user. Please log in again. ٩꒰• ε •꒱۶⁼³")
                 MainMenu()
             else:
-                print("Oops! You're not registered yet.\nLet's create an account!\n")
+                print("Oops! You're not registered yet.\nLet's create an account!(=^-ω-^=)\n")
                 createAcct(id, userType)
                 MainMenu()
         except ValueError:
-            print("This is not a valid number.")
+            print("This is not a valid number.(⌯⊙⍛⊙)")
 MainMenu()
