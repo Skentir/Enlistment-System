@@ -9,7 +9,7 @@ Basically a poor knock-off version of the existing AnimoSys made by a lazy hooma
 ### Admin ###
 - Has a passkey to be safe from student trolls 
 - Can add and delete courses
-- Can add prerequisites to added courses
+- Can add and remove prerequisites to added courses
 - Can view users and courses
 ### Student ##
 - Can enlist to a course
